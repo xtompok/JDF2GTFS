@@ -1,0 +1,5 @@
+#!/bin/sh
+
+mysql --user=jdf --password=kokoko JDF -e "SET group_concat_max_len=10000; SELECT * FROM $1" | sed 's/"/""/g;s/\t/","/g;s/^/"/;s/$/"/;' >GTFS/dump/$1.txt
+
+

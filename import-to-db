@@ -1,0 +1,16 @@
+#!/bin/sh
+
+echo $1
+TMP=`mktemp`
+mysql --user=jdf --password=kokoko -v -v JDF >$TMP <<END
+load data infile "/home/jethro/Programy/JDF2GTFS/utf/$1" replace into table \`${1%.*}\` fields terminated by ',' enclosed by '"' lines terminated by ";\r\n" ;
+show warnings;
+END
+
+cat $TMP | sed -n "/^ERROR/p"
+cat $TMP | sed -n "/^Query/p"
+cat $TMP | sed -n "/^Records:/p"
+cat $TMP | sed -n "/^Level/p"
+cat $TMP | sed -n "/^Warning/p"
+
+
