@@ -1,5 +1,9 @@
+DROP TABLE IF EXISTS zastavky CASCADE;
+
 CREATE TABLE zastavky (
-	cislo INT PRIMARY KEY,
+	id SERIAL PRIMARY KEY,
+	route INT,
+	cislo INT,
 	obec VARCHAR(48),
 	cast_o VARCHAR(48),
 	misto VARCHAR(48),

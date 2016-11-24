@@ -3,17 +3,17 @@
 .PHONY: GTFS
 .PHONY: all
 
-DATADIR="JDF Leo 140202"
 
-all: utf database GTFS
+all: download utf database GTFS
+
+schema:
+	psql jdf < schema.sql
+
+download:
+	./download.sh
 
 utf:
-	@rm utf/*
-	@for i in `ls data/${DATADIR}/`;\
-		do\
-			echo $$i;\
-			cat data/${DATADIR}/$$i | iconv -f windows-1250 -t utf-8 >utf/$$i;\
-		done
+	./to-utf.sh
 
 database: 
 	./clear_database.sh

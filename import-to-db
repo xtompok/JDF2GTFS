@@ -1,16 +1,21 @@
 #!/bin/sh
 
-echo $1
-TMP=`mktemp`
-mysql --user=jdf --password=kokoko -v -v JDF >$TMP <<END
-load data infile "/home/jethro/Programy/JDF2GTFS/utf/$1" replace into table \`${1%.*}\` fields terminated by ',' enclosed by '"' lines terminated by ";\r\n" ;
-show warnings;
-END
+DATABASE=jdf
+USERNAME=jethro
 
-cat $TMP | sed -n "/^ERROR/p"
-cat $TMP | sed -n "/^Query/p"
-cat $TMP | sed -n "/^Records:/p"
-cat $TMP | sed -n "/^Level/p"
-cat $TMP | sed -n "/^Warning/p"
+echo Importuji zastavky...
+for d in `ls -d data/utf/*/`;
+	do
+		echo $d;
+		DIR=`basename $d`
+		COMMAND="COPY zastavky \
+			(route,cislo,obec,cast_o,misto,blizko,stat,\
+			p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,p_kod6)\
+			FROM STDIN WITH (FORMAT \"csv\") ;"
+		cat data/utf/$DIR/Zastavky.txt | \
+			./preformat $DIR {} |\
+			psql -c "$COMMAND" $DATABASE $USERNAME
+	done
+
 
 
