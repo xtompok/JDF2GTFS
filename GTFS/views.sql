@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION rpref(INT,INT) 
-RETURNS INT 
+RETURNS VARCHAR(50) 
 AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2);
@@ -7,7 +7,7 @@ END
 ' LANGUAGE 'plpgsql';
 
 CREATE OR REPLACE FUNCTION rpref(INT,INT,INT) 
-RETURNS INT 
+RETURNS VARCHAR(50)
 AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2,''-'',$3);
@@ -15,7 +15,7 @@ END
 ' LANGUAGE 'plpgsql';
 
 CREATE OR REPLACE FUNCTION rpref(INT,INT,INT,INT) 
-RETURNS INT 
+RETURNS VARCHAR(50)
 AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2,''-'',$3,''-'',$4);
@@ -68,18 +68,21 @@ SELECT rpref(route,linka,rozl_linky,spoj) AS trip_id,
 	km AS shape_dist_traveled
 FROM zasspoje;
 
-CREATE TABLE calendar (
-	service_id INT,
-	monday INT,
-	tuesday INT,
-	wednesday INT,
-	thursday INT,
-	friday INT,
-	saturday INT,
-	sunday INT,
-	start_date CHAR(8),
-	end_date CHAR(8)
-);
+DROP VIEW IF EXISTS calendar;
+CREATE VIEW calendar AS
+SELECT rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
+	s.p_kod1,s.p_kod2,s.p_kod3,s.p_kod4,s.p_kod5,s.p_kod6,s.p_kod7,s.p_kod8,s.p_kod9,
+	l.jr_od,l.jr_do
+FROM spoje AS s INNER JOIN linky AS l ON rpref(s.route,s.linka,s.rozl_linky) = rpref(l.route,l.cislo,l.rozl_linky);
 
-INSERT INTO calendar VALUES (0,1,1,1,1,1,1,1,20131213,20141213);
+DROP VIEW IF EXISTS calendar_dates;
+CREATE VIEW calendar_dates AS
+SELECT rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
+	ck.datum_od,
+	ck.datum_do,
+	ck.cas_kod_typ AS exception_type
+FROM spoje AS s INNER JOIN caskody AS ck ON rpref(s.route,s.linka,s.rozl_linky,s.spoj) = rpref(ck.route,ck.linka,ck.rozl_linky,ck.spoj);
+
+
+
 
