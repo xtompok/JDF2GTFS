@@ -1,0 +1,20 @@
+Předpoklady:
+
+1) Číslo linky je jednoznačné přes celá data. Toto vesměs platí, na náhodném vzorku
+jsem nenašel úplně rozdílné linky se stejným číslem.
+
+SQL dotaz: 
+SELECT cislo,COUNT(cislo),ARRAY_AGG(DISTINCT nazev) 
+FROM linky
+GROUP BY cislo 
+HAVING COUNT(DISTINCT nazev) > 1; 
+
+2) IČO + rozlišení dopravce je jednoznačné přes celá data. Toto platí pro
+dopravce s IČO != 0. Pro naše účely IČO == 0 => dopravce "Ostatní".
+
+SQL dotaz:
+SELECT ICO, ARRAY_AGG( DISTINCT jmeno), rozl_dop 
+FROM dopravci 
+GROUP BY (ICO, rozl_dop)
+HAVING COUNT(DISTINCT jmeno) > 1;
+
