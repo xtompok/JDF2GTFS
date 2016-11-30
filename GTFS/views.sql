@@ -4,7 +4,7 @@ AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2);
 END
-' LANGUAGE 'plpgsql';
+' LANGUAGE 'plpgsql' IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION rpref(INT,INT,INT) 
 RETURNS VARCHAR(50)
@@ -12,7 +12,7 @@ AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2,''-'',$3);
 END
-' LANGUAGE 'plpgsql';
+' LANGUAGE 'plpgsql' IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION rpref(INT,INT,INT,INT) 
 RETURNS VARCHAR(50)
@@ -20,7 +20,16 @@ AS '
 BEGIN
 	RETURN CONCAT($1,''-'',$2,''-'',$3,''-'',$4);
 END
-' LANGUAGE 'plpgsql';
+' LANGUAGE 'plpgsql' IMMUTABLE;
+
+CREATE INDEX ON pevnykod(route);
+CREATE INDEX ON pevnykod(cislo);
+CREATE OR REPLACE FUNCTION p_kod_znak(CHAR(5),INT)
+RETURNS CHAR(1)
+AS 'SELECT znacka FROM pevnykod WHERE route = $2 AND cislo = $1; '
+LANGUAGE 'sql' IMMUTABLE;
+
+CREATE INDEX ON dopravci(rpref(route,ICO::INT,rozl_dop::INT));
 
 DROP VIEW IF EXISTS agency;
 CREATE VIEW agency AS
@@ -28,8 +37,10 @@ SELECT rpref(route,ICO::INT,rozl_dop::INT) AS agency_id,
 	jmeno AS agency_name,
 	www AS agency_url,
 	'Europe/Prague'::VARCHAR(30) AS agency_timezone,
-	tel_info AS agnecy_phone
+	tel_info AS agency_phone
 FROM dopravci;
+
+
 
 DROP VIEW IF EXISTS stops;
 CREATE VIEW stops AS
@@ -41,6 +52,9 @@ FROM zastavky AS z
 LEFT OUTER JOIN zas_pozice AS zp ON zp.stop_name = CONCAT(obec,',',cast_o,',',misto);
 
 
+CREATE INDEX ON linky(rpref(route,cislo,rozl_linky));
+CREATE INDEX ON linky(rpref(route,ICO::INT,rozl_dop));
+
 DROP VIEW IF EXISTS routes;
 CREATE VIEW routes AS
 SELECT rpref(route,cislo,rozl_linky) AS route_id,
@@ -50,30 +64,46 @@ SELECT rpref(route,cislo,rozl_linky) AS route_id,
 	prostredek AS route_type
 FROM linky;
 
+CREATE INDEX ON spoje(rpref(route,linka,rozl_linky));
+CREATE INDEX ON spoje(rpref(route,linka,rozl_linky,spoj));
+
 DROP VIEW IF EXISTS trips;
 CREATE VIEW trips AS
 SELECT rpref(s.route,s.linka,s.rozl_linky) AS route_id,
-	rpref(s.route,c.cas_kod) AS service_id,
+	rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
 	rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS trip_id
-FROM spoje AS s INNER JOIN caskody AS c ON
-	rpref(s.route,s.linka,s.rozl_linky,s.spoj) = rpref(c.route,c.linka,c.rozl_linky,c.spoj);
+FROM spoje AS s; --INNER JOIN caskody AS c ON
+--	rpref(s.route,s.linka,s.rozl_linky,s.spoj) = rpref(c.route,c.linka,c.rozl_linky,c.spoj);
 		
+CREATE INDEX ON zasspoje(rpref(route,linka,rozl_linky,spoj));
+
 DROP VIEW IF EXISTS stop_times;
 CREATE VIEW stop_times AS
 SELECT rpref(route,linka,rozl_linky,spoj) AS trip_id,
 	prijezd AS arrival_time,
 	odjezd AS departure_time,
-	zastavka AS stop_id,
+	rpref(route,zastavka) AS stop_id,
 	tarif_cis AS stop_sequence,
-	km AS shape_dist_traveled
-FROM zasspoje;
+	km AS shape_dist_traveled,
+	p_kod1,
+	p_kod2,
+	p_kod3,
+	spoj
+FROM zasspoje
+WHERE odjezd NOT IN ('<','|');
+
+CREATE INDEX ON caskody(rpref(route,linka,rozl_linky));
 
 DROP VIEW IF EXISTS calendar;
 CREATE VIEW calendar AS
 SELECT rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
-	s.p_kod1,s.p_kod2,s.p_kod3,s.p_kod4,s.p_kod5,s.p_kod6,s.p_kod7,s.p_kod8,s.p_kod9,
-	l.jr_od,l.jr_do
+	p_kod_znak(s.p_kod1,s.route) AS p_kod1, p_kod_znak(s.p_kod2,s.route) AS p_kod2, p_kod_znak(s.p_kod3,s.route) AS p_kod3,
+	p_kod_znak(s.p_kod4,s.route) AS p_kod4, p_kod_znak(s.p_kod5,s.route) AS p_kod5, p_kod_znak(s.p_kod6,s.route) AS p_kod6,
+	p_kod_znak(s.p_kod7,s.route) AS p_kod7, p_kod_znak(s.p_kod8,s.route) AS p_kod8, p_kod_znak(s.p_kod9,s.route) AS p_kod9,
+	l.jr_od AS start_date,l.jr_do AS end_date
 FROM spoje AS s INNER JOIN linky AS l ON rpref(s.route,s.linka,s.rozl_linky) = rpref(l.route,l.cislo,l.rozl_linky);
+
+CREATE INDEX ON caskody(rpref(route,linka,rozl_linky,spoj));
 
 DROP VIEW IF EXISTS calendar_dates;
 CREATE VIEW calendar_dates AS
