@@ -44,7 +44,7 @@ FROM dopravci;
 
 DROP VIEW IF EXISTS stops;
 CREATE VIEW stops AS
-SELECT rpref(route,cislo) AS stop_id,
+SELECT DISTINCT(rpref(route,cislo)) AS stop_id,
 	CONCAT(obec,',',cast_o,',',misto) AS stop_name,
 	stop_lat,
 	stop_lon
@@ -54,6 +54,7 @@ LEFT OUTER JOIN zas_pozice AS zp ON zp.stop_name = CONCAT(obec,',',cast_o,',',mi
 
 CREATE INDEX ON linky(rpref(route,cislo,rozl_linky));
 CREATE INDEX ON linky(rpref(route,ICO::INT,rozl_dop));
+CREATE INDEX ON linky(cislo);
 
 DROP VIEW IF EXISTS routes;
 CREATE VIEW routes AS
@@ -63,6 +64,7 @@ SELECT rpref(route,cislo,rozl_linky) AS route_id,
 	nazev AS route_long_name,
 	prostredek AS route_type
 FROM linky;
+--WHERE cislo::INT < 200000;
 
 CREATE INDEX ON spoje(rpref(route,linka,rozl_linky));
 CREATE INDEX ON spoje(rpref(route,linka,rozl_linky,spoj));
@@ -72,10 +74,12 @@ CREATE VIEW trips AS
 SELECT rpref(s.route,s.linka,s.rozl_linky) AS route_id,
 	rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
 	rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS trip_id
-FROM spoje AS s; --INNER JOIN caskody AS c ON
+FROM spoje AS s;
+--WHERE s.linka::INT < 200000; --INNER JOIN caskody AS c ON
 --	rpref(s.route,s.linka,s.rozl_linky,s.spoj) = rpref(c.route,c.linka,c.rozl_linky,c.spoj);
 		
 CREATE INDEX ON zasspoje(rpref(route,linka,rozl_linky,spoj));
+CREATE INDEX ON zasspoje(linka);
 
 DROP VIEW IF EXISTS stop_times;
 CREATE VIEW stop_times AS
@@ -91,6 +95,7 @@ SELECT rpref(route,linka,rozl_linky,spoj) AS trip_id,
 	spoj
 FROM zasspoje
 WHERE odjezd NOT IN ('<','|');
+--AND linka::INT < 200000;
 
 CREATE INDEX ON caskody(rpref(route,linka,rozl_linky));
 
@@ -102,6 +107,7 @@ SELECT rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
 	p_kod_znak(s.p_kod7,s.route) AS p_kod7, p_kod_znak(s.p_kod8,s.route) AS p_kod8, p_kod_znak(s.p_kod9,s.route) AS p_kod9,
 	l.jr_od AS start_date,l.jr_do AS end_date
 FROM spoje AS s INNER JOIN linky AS l ON rpref(s.route,s.linka,s.rozl_linky) = rpref(l.route,l.cislo,l.rozl_linky);
+--WHERE s.linka::INT < 200000;
 
 CREATE INDEX ON caskody(rpref(route,linka,rozl_linky,spoj));
 
@@ -112,6 +118,7 @@ SELECT rpref(s.route,s.linka,s.rozl_linky,s.spoj) AS service_id,
 	ck.datum_do,
 	ck.cas_kod_typ AS exception_type
 FROM spoje AS s INNER JOIN caskody AS ck ON rpref(s.route,s.linka,s.rozl_linky,s.spoj) = rpref(ck.route,ck.linka,ck.rozl_linky,ck.spoj);
+--WHERE s.linka::INT < 200000;
 
 
 

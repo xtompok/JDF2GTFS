@@ -88,4 +88,5 @@ for d in `ls -d data/utf/*/`;
 
 	done
 
-
+echo "Opravuji smer u sudych spoju"
+psql -c "UPDATE zasspoje SET tarif_cis = 100000-tarif_cis WHERE spoj%2 = 0;" $DATABASE $USERNAME

@@ -16,6 +16,8 @@ outdir = 'output'
 def url_filter(row):
 	if row["agency_url"]:
 		row["agency_url"]="http://"+row["agency_url"]
+	else:
+		row["agency_url"]="http://example.com"
 	return row
 
 def daterange(start_date, end_date):
@@ -105,13 +107,36 @@ def departure_filter(row):
 
 def seq_order_filter(row):
 	if int(row["spoj"])%2 == 0:
-		row["stop_sequence"] = -int(row["stop_sequence"])
+		row["stop_sequence"] = 100000-int(row["stop_sequence"])
 	return row
 
 def time_filter(row,field):
 	atime = row[field]
 	row[field] = atime[:2]+":"+atime[2:4]+":00"
 	return row
+
+class Midnight_filter(object):
+	def __init__(self):
+		self.id = None
+		self.hours = 0
+		self.days = 0
+		self.asc = True
+	def __call__(self,row,field):
+		if self.id == row["trip_id"]:
+			ahours = int(row[field][:2])
+			if ahours < self.hours:
+				self.days += 1
+			self.hours = ahours
+			row[field] = "{:02d}".format(self.hours+24*self.days)+row[field][2:]
+		else:
+			self.id = row["trip_id"]
+			self.days = 0
+			self.hours = int(row[field][:2])
+			self.asc = True if row["stop_sequence"] > 10000 else False
+		return row
+
+
+
 
 def cal_exceptions_filter(table):
 	newtable = []
@@ -168,6 +193,12 @@ def cal_exceptions_filter(table):
 			pass
 	return newtable
 
+def default_filter(row,field,default):
+	if not row[field]:
+		row[field] = default
+	return row
+	
+
 
 
 agency_query="SELECT agency_id,agency_name,agency_url,agency_timezone,agency_phone FROM agency;"
@@ -221,6 +252,8 @@ print("{:.3f} s".format(time.time()-stime))
 print("Stops...")
 stime = time.time()
 stops.fetch_from_db(cur)
+stops.add_filter(partial(default_filter,field="stop_lon",default=0.0))
+stops.add_filter(partial(default_filter,field="stop_lat",default=0.0))
 stops.apply_filters()
 stops.export_to_file()
 del stops.table
@@ -230,11 +263,13 @@ print("Stop times...")
 stime = time.time()
 stop_times.add_filter(departure_filter)
 stop_times.add_filter(arrival_filter)
+stop_times.add_filter(partial(Midnight_filter(),field="arrival_time"))
+stop_times.add_filter(partial(Midnight_filter(),field="departure_time"))
 stop_times.add_filter(partial(time_filter,field="arrival_time"))
 stop_times.add_filter(partial(time_filter,field="departure_time"))
 stop_times.add_filter(pickup_filter)
 stop_times.add_filter(drop_off_filter)
-stop_times.add_filter(seq_order_filter)
+#stop_times.add_filter(seq_order_filter)
 stop_times.add_filter(partial(remove_keys_filter,keys=["p_kod1","p_kod2","p_kod3","spoj"]))
 stop_times.process(cur)
 print("{:.3f} s".format(time.time()-stime))

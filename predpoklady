@@ -1,7 +1,7 @@
 Předpoklady:
 
-1) Číslo linky je jednoznačné přes celá data. Toto vesměs platí, na náhodném vzorku
-jsem nenašel úplně rozdílné linky se stejným číslem.
+1) Číslo linky je jednoznačné přes celá data. Toto vesměs platí, na náhodném
+vzorku jsem nenašel úplně rozdílné linky se stejným číslem.
 
 SQL dotaz: 
 SELECT cislo,COUNT(cislo),ARRAY_AGG(DISTINCT nazev) 
@@ -18,3 +18,5 @@ FROM dopravci
 GROUP BY (ICO, rozl_dop)
 HAVING COUNT(DISTINCT jmeno) > 1;
 
+3) Spoje se sudým číslem jedou proti směru času. Snad platí, za tohoto
+předpokladu je korektní UPDATE v import-to-db.
