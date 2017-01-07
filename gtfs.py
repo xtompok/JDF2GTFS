@@ -3,9 +3,33 @@ import os
 import sys
 import csv
 import datetime
+import time
 import tempfile
 import zipfile
 from pprint import pprint
+from dicttable import DictTable
+
+class StopTime:
+	def __init__(self,astr):
+		self.hour = int(astr[:2])
+		self.min = int(astr[3:5])
+		self.sec = int(astr[6:8])
+	
+	def __lt__(self,other):
+		if not isinstance(other,StopTime):
+			return TypeError("Must compare to StopTime")
+		if self.hour < other.hour:
+			return True
+		if self.min < other.min:
+			return True
+		if self.sec < other.sec:
+			return True
+	
+	def __str__(self):
+		return "{:02}:{:02}:{02}".format(self.hour,self.min,self.sec)
+	
+	def __repr__(self):
+		return str(self)
 
 class GTFSCalendar(object):
 	""" Class for managing GTFS calendar_dates table"""
@@ -118,8 +142,10 @@ class GTFSStreamTable(object):
 		writer = csv.DictWriter(out,colnames)
 		writer.writeheader()
 		
+		processed = 0
+		print("Processing results ({})".format(time.time()))
 		while True:
-			res = cur.fetchmany(1000)
+			res = cur.fetchmany(10000)
 			if len(res)==0:
 				break
 			self.table = []
@@ -139,22 +165,34 @@ class GTFSStreamTable(object):
 					writer.writerow(row)
 				except:
 					pprint(row)
+			if processed%100000 == 0:
+				print("Processed: {} ({})".format(processed,time.time()))
+				processed += len(res)
 		out.close()
 		
 
 
-def load_gtfs(filename):
-	table_names = ["agency","routes","stops","stop_times","trips","calendar_dates"]
+
+def load_gtfs(filename,encoding='utf-8'):
 	tables={}
 	with zipfile.ZipFile(filename) as gtfs:
 		for fname in gtfs.namelist():
 			with gtfs.open(fname) as tablefile:
 				lines = tablefile.readlines()
-				lines = list(map(lambda x: x.strip(),map(lambda x: x.decode('utf-8'),lines)))
-				table = csv.DictReader(lines)
+				lines = list(map(lambda x: x.strip(),map(lambda x: x.decode(encoding),lines)))
+				table = csv.reader(lines)
 				name = fname[:-4]
-				tables[name]=[line for line in table]
+				columns = next(table) 
+				tables[name]=DictTable(columns,[line for line in table])
 	return tables
+
+
+def sort_stop_times(st):
+	st.col_convert('stop_sequence',int)
+	st.col_convert('arrival_time',StopTime)
+	st.col_convert('departure_time',StopTime)
+	st.key_sort(['trip_id','stop_sequence']) 
+	
 
 def save_gtfs(filename,tables):
 	with zipfile.ZipFile(filename,"w",compression=zipfile.ZIP_DEFLATED) as zipf:
@@ -169,3 +207,28 @@ def save_gtfs(filename,tables):
 			tablef.close()
 
 
+def load_gtfs_table(filename,table_name):
+	with zipfile.ZipFile(filename) as gtfs:
+		files = gtfs.namelist()
+		if not table_name+".txt" in files:
+			print("Table {} not in GTFS file".format(table_name))
+			return None
+		with gtfs.open(table_name+".txt") as tablefile:
+			lines = tablefile.readlines()
+			lines = list(map(lambda x: x.strip(),map(lambda x: x.decode('utf-8'),lines)))
+			table = csv.reader(lines)
+	columns = next(table)
+	return DictTable(columns,[line for line in table])
+
+def save_gtfs_table(filename,table,table_name):
+	with zipfile.ZipFile(filename,"a",compression=zipfile.ZIP_DEFLATED) as zipf:
+		fieldnames = table[0].keys()
+		print("Fieldnames: {}".format(fieldnames))
+		tablef = tempfile.NamedTemporaryFile(mode="w",encoding="utf-8")
+		writer=csv.DictWriter(tablef,fieldnames)
+		writer.writeheader()
+		writer.writerows(table)
+		tablef.flush()
+		zipf.write(tablef.name,table_name+".txt")
+		tablef.close()
+		
