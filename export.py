@@ -316,5 +316,5 @@ print("{:.3f} s".format(time.time()-stime))
 
 with zipfile.ZipFile(os.path.join(outdir,"gtfs-bus.zip"),"w") as gtfszip:
 #	for table in [agency,routes,stops,stop_times,trips,calendar_dates]:
-	for table in [agency,routes,stops,stop_times,trips]:
+	for table in [agency,routes,stops,stop_times,trips,calendar,calendar_dates]:
 		gtfszip.write(os.path.join(table.outdir,table.name+".txt"),arcname=table.name+".txt")
