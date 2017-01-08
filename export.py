@@ -300,7 +300,9 @@ stop_times.add_filter(partial(time_filter,field="departure_time"))
 stop_times.add_filter(pickup_filter)
 stop_times.add_filter(drop_off_filter)
 #stop_times.add_filter(seq_order_filter)
-stop_times.add_filter(partial(remove_keys_filter,keys=["p_kod1","p_kod2","p_kod3","spoj"]))
+# Does not work - StreamTable does not support manipulating with columns.
+# Columns are removed in postprocessing.
+#stop_times.add_filter(partial(remove_keys_filter,keys=["p_kod1","p_kod2","p_kod3","spoj"]))
 stop_times.process(cur)
 print("{:.3f} s".format(time.time()-stime))
 

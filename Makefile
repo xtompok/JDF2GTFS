@@ -24,6 +24,8 @@ GTFS:
 	./postprocess.py			
 	cd output && zip gtfs-bus-out.zip *.txt		
 
+JDFversion:
+	cd data/utf/; for i in `ls`; do cat $$i/VerzeJDF.txt; done | sort | uniq -c
 
 old:
 	rm -rf GTFS/dump/

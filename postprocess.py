@@ -73,6 +73,6 @@ def delete_columns(table_file,columns):
 	save_gtfs_table(table_file,table)		
 	
 	
-delete_columns("output/stop_times.txt",["p_kod1","p_kod2","p_kod3"])
+delete_columns("output/stop_times.txt",["p_kod1","p_kod2","p_kod3","spoj"])
 union_tables_column("output/agency.txt",["output/routes.txt"],"agency_id")
 union_tables_column("output/stops.txt",["output/stop_times.txt"],"stop_id")
