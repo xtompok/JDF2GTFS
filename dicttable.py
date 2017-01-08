@@ -10,7 +10,7 @@ class DictRow(object):
 		return itemdict
 	
 	def keys(self):
-		return self.lut.keys()	
+		return self.dtable.columns
 
 	def get(self,key,restval):
 		try:
@@ -85,9 +85,9 @@ class DictRowIterator(object):
 		return self
 	
 	def __next__(self):
-		if self.idx >= len(self.dtable.lut):
+		if self.idx >= len(self.dtable.columns):
 			raise StopIteration
-		item = self.dtable.ilut[self.idx]
+		item = self.dtable.columns[self.idx]
 		self.idx+= 1
 		return item
 	
@@ -169,3 +169,21 @@ class DictTable(object):
 		idx = self.lut[col]
 		for row in self.table:
 			row[idx] = conv(row[idx])
+	
+	def delete_column(self,col):
+		try:
+			del self.lut[col]
+		except KeyError:
+			pass
+		try:
+			self.columns.remove(col)
+		except ValueError:
+			pass
+
+		to_delete = None
+		for key in self.ilut:
+			if self.ilut[key] == col:
+				to_delete = key
+				break
+		if to_delete:
+			del self.ilut[to_delete]

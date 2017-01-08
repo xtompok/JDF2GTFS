@@ -16,11 +16,16 @@ utf:
 	./to-utf.sh
 
 database: 
-	./clear_database.sh
-	mysql --user=jdf --password=kokoko JDF <schema.sql
-	for i in `ls utf`; do ./import-to-db $$i; done;
+	psql jdf <schema.sql
+	./import-to-db
 
 GTFS:
+	./export.py
+	./postprocess.py			
+	cd output && zip gtfs-bus-out.zip *.txt		
+
+
+old:
 	rm -rf GTFS/dump/
 	mkdir GTFS/dump
 	rm -rf GTFS/output/

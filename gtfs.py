@@ -207,28 +207,20 @@ def save_gtfs(filename,tables):
 			tablef.close()
 
 
-def load_gtfs_table(filename,table_name):
-	with zipfile.ZipFile(filename) as gtfs:
-		files = gtfs.namelist()
-		if not table_name+".txt" in files:
-			print("Table {} not in GTFS file".format(table_name))
-			return None
-		with gtfs.open(table_name+".txt") as tablefile:
-			lines = tablefile.readlines()
-			lines = list(map(lambda x: x.strip(),map(lambda x: x.decode('utf-8'),lines)))
-			table = csv.reader(lines)
+def load_gtfs_table(filename):
+	with open(filename) as tablefile:
+		lines = tablefile.readlines()
+		lines = list(map(lambda x: x.strip(),lines))
+		table = csv.reader(lines)
 	columns = next(table)
 	return DictTable(columns,[line for line in table])
 
-def save_gtfs_table(filename,table,table_name):
-	with zipfile.ZipFile(filename,"a",compression=zipfile.ZIP_DEFLATED) as zipf:
-		fieldnames = table[0].keys()
-		print("Fieldnames: {}".format(fieldnames))
-		tablef = tempfile.NamedTemporaryFile(mode="w",encoding="utf-8")
-		writer=csv.DictWriter(tablef,fieldnames)
-		writer.writeheader()
-		writer.writerows(table)
-		tablef.flush()
-		zipf.write(tablef.name,table_name+".txt")
-		tablef.close()
+def save_gtfs_table(filename,table):
+	fieldnames = table[0].keys()
+	print("Fieldnames: {}".format(fieldnames))
+	tablef = open(filename,mode="w",encoding="utf-8")
+	writer=csv.DictWriter(tablef,fieldnames)
+	writer.writeheader()
+	writer.writerows(table)
+	tablef.close()
 		
