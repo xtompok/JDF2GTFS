@@ -185,13 +185,19 @@ def cal_exceptions_filter(table):
 			
 		# jede jen v lichych tydnech
 		elif row["exception_type"] == "5":
-			start=ymd_to_date(row["datum_od"])
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
 			if row["datum_do"]:
 				end=ymd_to_date(row["datum_do"])
-			else:
+			elif row["datum_od"]:
 				end=start
+			else:
+				end=date.today()+timedelta(days=180)
 			for day in daterange(start,end):
-				if day.isoweekday()[1]%2 == 1:
+				if day.isoweekday()%2 == 1:
 					continue
 				newrow = {}
 				newrow["exception_type"] = 2
@@ -201,13 +207,19 @@ def cal_exceptions_filter(table):
 
 		# jede jen v sudych tydnech
 		elif row["exception_type"] == "6":
-			start=ymd_to_date(row["datum_od"])
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
 			if row["datum_do"]:
 				end=ymd_to_date(row["datum_do"])
-			else:
+			elif row["datum_od"]:
 				end=start
+			else:
+				end=date.today()+timedelta(days=180)
 			for day in daterange(start,end):
-				if day.isoweekday()[1]%2 == 0:
+				if day.isoweekday()%2 == 0:
 					continue
 				newrow = {}
 				newrow["exception_type"] = 2
@@ -217,10 +229,47 @@ def cal_exceptions_filter(table):
 
 		# jede jen v lichych tydnech od ... do ...
 		elif row["exception_type"] == "7":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 1:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
+
 		# jede jen v sudych tydnech od ... do ...
 		elif row["exception_type"] == "8":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 0:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
 	return newtable
 
 def default_filter(row,field,default):

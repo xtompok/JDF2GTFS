@@ -36,7 +36,7 @@ for d in `ls -d data/utf/*/`;
 		echo Dopravci
 		import dopravci "route,ICO,DIC,jmeno,druh,jmeno_os,adresa,\
 			tel_sidlo,tel_disp,tel_info,\
-			fax,email,www,rozliseni" $DIR Dopravci
+			fax,email,www,rozl_dop" $DIR Dopravci
 
 		echo Linky
 		import linky "route,cislo,nazev,ICO,typ,prostredek,vyluka,\

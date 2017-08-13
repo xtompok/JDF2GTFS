@@ -6,12 +6,12 @@ DATABASE=jdf
 # :%s/;;\([0-9]*\),\([0-9]*\);\([0-9]*\),\([0-9]*\);/;;\1.\2;\3.\4;/gc
 
 
-if [ -e data/bus_stops.csv ]
+if [ -e data/bus_stops/bus_stops-utf.csv ]
 then
 	COMMAND="COPY zas_pozice (stop_id,stop_name,stop_desc,stop_lat,stop_lon, stop_url,\
 		location_t, parent_sta) \
 		FROM STDIN WITH (FORMAT \"csv\", DELIMITER \";\", HEADER true) ;"
-	cat data/bus_stops.csv | psql -c "$COMMAND" $DATABASE $USERNAME
+	cat data/bus_stops/bus_stops-utf.csv | psql -c "$COMMAND" $DATABASE $USERNAME
 else
-	echo "Can't find file data/bus_stops.csv with stops coordinates"
+	echo "Can't find file data/bus_stops/bus_stops-utf.csv with stops coordinates"
 fi
