@@ -18,6 +18,8 @@ utf:
 database: 
 	psql jdf <schema.sql
 	./import-to-db
+	./import-stop-pos
+	psql jdf <GTFS/views.sql
 
 GTFS:
 	./export.py

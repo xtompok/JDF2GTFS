@@ -79,7 +79,10 @@ def day_filter(row,sym,day):
 
 def vehicle_filter(row):
 	vehicles = {"A":3,"E":0,"T":3,"L":7,"M":1,"P":4}
-	row["route_type"] = vehicles[row["route_type"]]
+	if row["route_type"]:
+		row["route_type"] = vehicles[row["route_type"]]
+	else:
+		row["route_type"] = 3
 	return row
 
 def pickup_filter(row):
