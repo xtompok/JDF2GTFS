@@ -1,7 +1,9 @@
 JDF2GTFS
 ========
-
-Convert JDF files to GTFS
+Sada skriptů pro konverzi souborů z formátu JDF do formátu GTFS. 
+Určeno pro Linux, testováno na Ubuntu.
+Předpokládá PostgreSQL databázi nebo možnost její instalace.
+Pro běh nad daty celé ČR vyžaduje alespoň 8GB RAM a 4GB místa na disku. 
 
 ## Instalace
  * naklonovat tento repozitář
