@@ -14,6 +14,6 @@ do
 	echo Extracting $f
 	NUM="${f%.*}"
 	mkdir -p $NUM
-	unzip -qf -d $NUM $f
+	unzip -qo -d $NUM $f
 done
 

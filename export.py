@@ -8,8 +8,10 @@ import os
 import psycopg2
 import psycopg2.extras
 from functools import partial,reduce
-from gtfs import GTFSTable,GTFSStreamTable,GTFSCalendar 
 from datetime import timedelta, date
+
+sys.path.append('./gtfstools')
+from gtfs import GTFSTable,GTFSStreamTable,GTFSCalendar 
 
 outdir = 'output'
 
@@ -79,7 +81,10 @@ def day_filter(row,sym,day):
 
 def vehicle_filter(row):
 	vehicles = {"A":3,"E":0,"T":3,"L":7,"M":1,"P":4}
-	row["route_type"] = vehicles[row["route_type"]]
+	if row["route_type"]:
+		row["route_type"] = vehicles[row["route_type"]]
+	else:
+		row["route_type"] = 3
 	return row
 
 def pickup_filter(row):
@@ -164,7 +169,11 @@ def cal_exceptions_filter(table):
 			newtable.append(newrow)
 		# jede jen
 		elif row["exception_type"] == "3":
-			pass
+			newrow = {}
+			newrow["exception_type"] = 1
+			newrow["service_id"] = row["service_id"]
+			newrow["date"] = row["datum_od"] 
+			newtable.append(newrow)
 		# nejede
 		elif row["exception_type"] == "4":
 			start=ymd_to_date(row["datum_od"])
@@ -181,16 +190,91 @@ def cal_exceptions_filter(table):
 			
 		# jede jen v lichych tydnech
 		elif row["exception_type"] == "5":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 1:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
+
 		# jede jen v sudych tydnech
 		elif row["exception_type"] == "6":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 0:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
+
 		# jede jen v lichych tydnech od ... do ...
 		elif row["exception_type"] == "7":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 1:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
+
 		# jede jen v sudych tydnech od ... do ...
 		elif row["exception_type"] == "8":
-			pass
+			if row["datum_od"]:
+				start=ymd_to_date(row["datum_od"])
+			else:
+				#kdyz neni zadne datum, plati pro cely JR
+				start=date.today()-timedelta(days=180)
+			if row["datum_do"]:
+				end=ymd_to_date(row["datum_do"])
+			elif row["datum_od"]:
+				end=start
+			else:
+				end=date.today()+timedelta(days=180)
+			for day in daterange(start,end):
+				if day.isoweekday()%2 == 0:
+					continue
+				newrow = {}
+				newrow["exception_type"] = 2
+				newrow["service_id"] = row["service_id"]
+				newrow["date"] = day.strftime("%Y%m%d")
+				newtable.append(newrow)
 	return newtable
 
 def default_filter(row,field,default):
@@ -270,7 +354,9 @@ stop_times.add_filter(partial(time_filter,field="departure_time"))
 stop_times.add_filter(pickup_filter)
 stop_times.add_filter(drop_off_filter)
 #stop_times.add_filter(seq_order_filter)
-stop_times.add_filter(partial(remove_keys_filter,keys=["p_kod1","p_kod2","p_kod3","spoj"]))
+# Does not work - StreamTable does not support manipulating with columns.
+# Columns are removed in postprocessing.
+#stop_times.add_filter(partial(remove_keys_filter,keys=["p_kod1","p_kod2","p_kod3","spoj"]))
 stop_times.process(cur)
 print("{:.3f} s".format(time.time()-stime))
 

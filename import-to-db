@@ -1,7 +1,7 @@
 #!/bin/sh
 
 DATABASE=jdf
-USERNAME=jethro
+USERNAME=$USER
 
 # table, columns, dir, file
 import(){
@@ -21,7 +21,7 @@ for d in `ls -d data/utf/*/`;
 
 		VERSION=`cat data/utf/$DIR/VerzeJDF.txt | cut -d \" -f 2`
 		echo Verze $VERSION
-		if [ $VERSION != "1.11" ]
+		if [ $VERSION != "1.11" -a $VERSION != "1.10" -a $VERSION != "1.9" ]
 		then
 			continue
 		fi
@@ -34,56 +34,143 @@ for d in `ls -d data/utf/*/`;
 		import pevnykod "route,cislo,znacka,rezerva" $DIR Pevnykod
 		
 		echo Dopravci
-		import dopravci "route,ICO,DIC,jmeno,druh,jmeno_os,adresa,\
-			tel_sidlo,tel_disp,tel_info,\
-			fax,email,www,rozliseni" $DIR Dopravci
+		if [ $VERSION = "1.9" ]
+		then
+			import dopravci "route,ICO,DIC,jmeno,druh,jmeno_os,adresa,\
+				tel_sidlo,tel_disp,tel_info,\
+				fax,email,www" $DIR Dopravci
+		elif [ $VERSION = "1.10" -o $VERSION = "1.11" ]
+		then
+			import dopravci "route,ICO,DIC,jmeno,druh,jmeno_os,adresa,\
+				tel_sidlo,tel_disp,tel_info,\
+				fax,email,www,rozl_dop" $DIR Dopravci
+		fi
 
 		echo Linky
-		import linky "route,cislo,nazev,ICO,typ,prostredek,vyluka,\
-			seskupeni,oznacnik,jednosmer,rezerva,\
-			licence,licence_od,licence_do,jr_od,jr_do,rozl_dop,rozl_linky" $DIR Linky
+		if [ $VERSION = "1.11" ]
+		then
+			import linky "route,cislo,nazev,ICO,typ,prostredek,vyluka,\
+				seskupeni,oznacnik,jednosmer,rezerva,\
+				licence,licence_od,licence_do,jr_od,jr_do,rozl_dop,rozl_linky" $DIR Linky
+		elif [ $VERSION = "1.10" ]
+		then
+			import linky "route,cislo,nazev,ICO,typ,prostredek,vyluka,\
+				seskupeni,oznacnik,rezerva,\
+				licence,licence_od,licence_do,jr_od,jr_do,rozl_dop,rozl_linky" $DIR Linky
+		elif [ $VERSION = "1.9" ]
+		then
+			import linky "route,cislo,nazev,ICO,typ,\
+				rezerva,\
+				licence,licence_od,licence_do,jr_od,jr_do" $DIR Linky
+
+		fi
+
 		echo Spoje
-		import spoje "route,linka,spoj,p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,\
-			p_kod6,p_kod7,p_kod8,p_kod9,p_kod10,skupina,rozl_linky" $DIR Spoje
+		if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+		then
+			import spoje "route,linka,spoj,p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,\
+				p_kod6,p_kod7,p_kod8,p_kod9,p_kod10,skupina,rozl_linky" $DIR Spoje
+		elif [ $VERSION = "1.9" ]
+		then
+			import spoje "route,linka,spoj,p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,\
+				p_kod6,p_kod7,p_kod8,p_kod9,p_kod10" $DIR Spoje
+		fi
 
 		echo Zaslinky
-		import zaslinky "route,linka,tarif_cis,tarif_pasmo,zastavka,\
-			avg_doba,p_kod1,p_kod2,p_kod3,rozl_linky" $DIR Zaslinky
+		if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+		then
+			import zaslinky "route,linka,tarif_cis,tarif_pasmo,zastavka,\
+				avg_doba,p_kod1,p_kod2,p_kod3,rozl_linky" $DIR Zaslinky
+		elif [ $VERSION = "1.9" ]
+		then
+			# tarif_pasmo nedava smysl, ve 1.9 je to rezerva
+			import zaslinky "route,linka,tarif_cis,tarif_pasmo,zastavka,\
+				p_kod1,p_kod2,p_kod3" $DIR Zaslinky
+		fi
+			
 
 		echo Zasspoje
-		import zasspoje "route,linka,spoj,tarif_cis,zastavka,kod_oznacniku,\
-			stanoviste,p_kod1,p_kod2,p_kod3,km,\
-			prijezd,odjezd,prij_min,odj_max,rozl_linky" $DIR Zasspoje
+		if [ $VERSION = "1.11" ]
+		then
+			import zasspoje "route,linka,spoj,tarif_cis,zastavka,kod_oznacniku,\
+				stanoviste,p_kod1,p_kod2,p_kod3,km,\
+				prijezd,odjezd,prij_min,odj_max,rozl_linky" $DIR Zasspoje
+		elif [ $VERSION = "1.10" ]
+		then
+			import zasspoje "route,linka,spoj,tarif_cis,zastavka,kod_oznacniku,\
+				stanoviste,p_kod1,p_kod2,km,\
+				prijezd,odjezd,rozl_linky" $DIR Zasspoje
+		elif [ $VERSION = "1.9" ]
+		then
+			import zasspoje "route,linka,spoj,tarif_cis,zastavka,\
+				stanoviste,p_kod1,p_kod2,km,\
+				prijezd,odjezd" $DIR Zasspoje
+		fi
 
 		if [ -e data/utf/$DIR/Udaje.txt ]
 		then
 			echo Udaje
-			import udaje "route,linka,udaj,text,rozl_linky" $DIR Udaje
+			if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+			then
+				import udaje "route,linka,udaj,text,rozl_linky" $DIR Udaje
+			elif [ $VERSION = "1.9" ]
+			then
+				import udaje "route,linka,udaj,text" $DIR Udaje
+			fi
+
+
 		fi
 		
 
 		echo Caskody
-		import caskody "route,linka,spoj,cas_kod,cas_kod_ozn,cas_kod_typ,\
-			datum_od,datum_do,poznamka,rozl_linky" $DIR Caskody
+		if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+		then
+			import caskody "route,linka,spoj,cas_kod,cas_kod_ozn,cas_kod_typ,\
+				datum_od,datum_do,poznamka,rozl_linky" $DIR Caskody
+		elif [ $VERSION = "1.9" ]
+		then
+			import caskody "route,linka,spoj,cas_kod,cas_kod_ozn,cas_kod_typ,\
+				datum_od,datum_do,poznamka" $DIR Caskody
+		fi
 		
 		if [ -e data/utf/$DIR/Altdop.txt ]
 		then
 			echo Altdop
-			import altdop "route,linka,spoj,ICO,\
-				p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,p_kod6,\
-				cas_kod_typ,rezerva,datum_od,datum_do,rozl_dop,rozl_linky" $DIR Altdop
+			if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+			then
+				import altdop "route,linka,spoj,ICO,\
+					p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,p_kod6,\
+					cas_kod_typ,rezerva,datum_od,datum_do,rozl_dop,rozl_linky" $DIR Altdop
+			elif [ $VERSION = "1.9" ]
+			then
+				import altdop "route,linka,spoj,ICO,\
+					p_kod1,p_kod2,p_kod3,p_kod4,p_kod5,p_kod6,\
+					cas_kod_typ,rezerva,datum_od,datum_do" $DIR Altdop
+			fi
 		fi
 
 		if [ -e data/utf/$DIR/Altlinky.txt ]
 		then
 			echo Altlinky
-			import altlinky "route,linka,alt_linka,stat,rozl_linky" $DIR Altlinky
+			if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+			then
+				import altlinky "route,linka,alt_linka,stat,rozl_linky" $DIR Altlinky
+			elif [ $VERSION = "1.9" ]
+			then
+				import altlinky "route,linka,alt_linka,stat" $DIR Altlinky
+			fi
 		fi
 
 		if [ -e data/utf/$DIR/Mistenky.txt ]
 		then
 			echo Mistenky
-			import mistenky "route,linka,spoj,text,rozl_linky" $DIR Mistenky
+			if [ $VERSION = "1.11" -o $VERSION = "1.10" ]
+			then
+				import mistenky "route,linka,spoj,text,rozl_linky" $DIR Mistenky
+			elif [ $VERSION = "1.9" ]
+			then
+				import mistenky "route,linka,spoj,text" $DIR Mistenky
+			fi
 		fi
 
 	done
