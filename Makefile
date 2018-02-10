@@ -15,9 +15,7 @@ download:
 utf:
 	./to-utf.sh
 
-database: 
-	./clear_database.sh
-	mysql --user=jdf --password=kokoko JDF <schema.sql
+database: schema
 	for i in `ls utf`; do ./import-to-db $$i; done;
 
 GTFS:
