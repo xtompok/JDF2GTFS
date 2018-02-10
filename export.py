@@ -8,8 +8,10 @@ import os
 import psycopg2
 import psycopg2.extras
 from functools import partial,reduce
-from gtfs import GTFSTable,GTFSStreamTable,GTFSCalendar 
 from datetime import timedelta, date
+
+sys.path.append('./gtfstools')
+from gtfs import GTFSTable,GTFSStreamTable,GTFSCalendar 
 
 outdir = 'output'
 

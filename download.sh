@@ -5,7 +5,7 @@ mkdir -p data/input
 
 cd data
 
-rm -f JDF.zip
+rm -rf JDF.zip input/*
 wget "ftp://ftp.cisjr.cz/JDF/JDF.zip"
 unzip -qod input JDF.zip
 cd input

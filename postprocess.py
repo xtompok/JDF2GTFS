@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+sys.path.append("./gtfstools")
 from gtfs import load_gtfs,save_gtfs,load_gtfs_table,save_gtfs_table
 from dicttable import DictTable
 from shutil import move as mv
